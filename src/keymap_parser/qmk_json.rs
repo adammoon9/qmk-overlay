@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::{fs, io, panic};
+use std::{fs, io};
 use thiserror::Error;
 
 // #[derive(Serialize, Deserialize)]
@@ -26,7 +26,7 @@ pub enum ParserError {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Keymap {
+pub struct Keymap {
     keyboard: String,
     keymap: String,
     layout: String,
@@ -52,7 +52,7 @@ pub struct KeycodeInfo {
     aliases: Option<Vec<String>>,
 }
 
-pub fn parse_keymap(keymap_path: &Path) -> Result<Keymap, ParserError> {
+pub fn load_keymap(keymap_path: &Path) -> Result<Keymap, ParserError> {
     // let keymap_dir =
     //     Path::new("/home/apm/qmk_firmware/keyboards/ferris/keymaps/apmferris/keymap.json");
     if !Path::exists(&keymap_path) {
@@ -65,25 +65,54 @@ pub fn parse_keymap(keymap_path: &Path) -> Result<Keymap, ParserError> {
     Ok(keymap)
 }
 
-pub fn parse_keycodes(keycodes_dir: &Path) -> HashMap<String, KeycodeInfo> {
-    // let keycode_directory = Path::new("/home/apm/qmk_firmware/data/constants/keycodes");
-    let keycode_files = fs::read_dir(keycodes_dir)
-        .unwrap()
-        .filter_map(|entry| entry.ok())
-        .filter(|entry| entry.path().extension().and_then(|ext| ext.to_str()) == Some("hjson"));
+pub fn parse_keymap_layers(
+    keymap: &Keymap,
+    keycodes: &HashMap<String, KeycodeInfo>,
+) -> Vec<Vec<String>> {
+    let mut parsed_keymap: Vec<Vec<String>> =
+        vec![vec![String::new(); keymap.layers[0].len()]; keymap.layers.len()];
 
+    for (i, layer) in keymap.layers.iter().enumerate() {
+        for (j, key) in layer.iter().enumerate() {
+            println!("{} : {}", key, get_keycode_label(key, keycodes));
+            parsed_keymap[i][j] = get_keycode_label(key, keycodes);
+        }
+    }
+
+    parsed_keymap
+}
+
+pub fn parse_keycodes(keycodes_dir: &Path) -> Result<HashMap<String, KeycodeInfo>, ParserError> {
+    let entries = fs::read_dir(keycodes_dir)?;
     let mut keycodes_map = HashMap::new();
 
-    for entry in keycode_files {
+    for entry in entries {
+        let entry = entry?;
         let path = entry.path();
+
+        if path.extension().and_then(|ext| ext.to_str()) != Some("hjson") {
+            continue;
+        }
+
         println!("Reading keycode file: {}", &path.display());
-        let contents = fs::read_to_string(&path)
-            .unwrap_or_else(|_| panic!("Unable to read keycode file: {}", path.display()));
+        let contents = fs::read_to_string(&path)?;
 
         match deser_hjson::from_str::<KeycodeFile>(&contents) {
             Ok(keycode_file) => {
                 let keycodes_count = keycode_file.keycodes.len();
-                keycodes_map.extend(keycode_file.keycodes);
+                // keycodes_map.extend(keycode_file.keycodes);
+                for (_, info) in keycode_file.keycodes {
+                    keycodes_map.insert(info.key.clone(), info.clone());
+
+                    if let Some(aliases) = &info.aliases {
+                        for alias in aliases {
+                            if !alias.trim().is_empty() {
+                                keycodes_map.insert(alias.clone(), info.clone());
+                            }
+                        }
+                    }
+                }
+
                 println!(
                     "Loaded {} keycodes from {}",
                     keycodes_count,
@@ -91,12 +120,80 @@ pub fn parse_keycodes(keycodes_dir: &Path) -> HashMap<String, KeycodeInfo> {
                 );
             }
             Err(e) => {
-                println!("Skipping file {} - parse error: {}", path.display(), e);
+                println!("Warning: Skipping {} - parse error: {}", path.display(), e);
                 continue;
+            }
+        }
+    }
+    let extra_keycodes_path = keycodes_dir.join("extras/keycodes_us_international_0.0.1.hjson");
+    if extra_keycodes_path.exists() {
+        let extra_keycodes = fs::read_to_string(&extra_keycodes_path)?;
+        match deser_hjson::from_str::<KeycodeFile>(&extra_keycodes) {
+            Ok(keycode_file) => {
+                let keycodes_count = keycode_file.keycodes.len();
+                // keycodes_map.extend(keycode_file.keycodes);
+                for (_, info) in keycode_file.keycodes {
+                    keycodes_map.insert(info.key.clone(), info.clone());
+                    if let Some(aliases) = &info.aliases {
+                        for alias in aliases {
+                            if !alias.trim().is_empty() {
+                                keycodes_map.insert(alias.clone(), info.clone());
+                            }
+                        }
+                    }
+                }
+                println!(
+                    "Loaded {} keycodes from {}",
+                    keycodes_count,
+                    extra_keycodes_path.file_name().unwrap().to_str().unwrap()
+                );
+            }
+            Err(e) => {
+                println!(
+                    "Warning: Skipping {} - parse error: {}",
+                    extra_keycodes_path.display(),
+                    e
+                );
             }
         }
     }
 
     println!("\nTotal keycodes loaded: {}", keycodes_map.len());
-    keycodes_map
+    Ok(keycodes_map)
+}
+
+pub fn get_keycode_label(keycode: &str, keycodes: &HashMap<String, KeycodeInfo>) -> String {
+    keycodes
+        .get(keycode)
+        .and_then(|info| {
+            info.label
+                .as_ref()
+                .filter(|l| !l.trim().is_empty())
+                .cloned()
+        })
+        .unwrap_or_else(|| keycode.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_keycode_lookup() {
+        let mut keycodes = HashMap::new();
+
+        keycodes.insert(
+            "KC_A".to_string(),
+            KeycodeInfo {
+                key: "KC_A".to_string(),
+                group: Some("basic".to_string()),
+                label: Some("A".to_string()),
+                aliases: Some(vec!["A".to_string()]),
+            },
+        );
+
+        assert_eq!(get_keycode_label("KC_A", &keycodes), "A");
+        assert_eq!(get_keycode_label("A", &keycodes), "A");
+        assert_eq!(get_keycode_label("UNKNOWN", &keycodes), "UNKNOWN");
+    }
 }

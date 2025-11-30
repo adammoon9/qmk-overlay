@@ -8,7 +8,7 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
   - [ ] Set up workspace structure
   - [x] Configure `Cargo.toml` with dependencies
   - [ ] Set up cross-platform build targets
-  
+
 - [x] Dependencies to add:
   - [x] `serde` and `serde_json` - JSON parsing
   - [x] `deser-hjson` - HJSON parsing for QMK data files
@@ -48,18 +48,18 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
 ## Phase 2: Keymap Parser
 
 - [ ] Implement QMK JSON keymap parser
-  - [ ] Define Rust structs matching QMK JSON schema
+  - [x] Define Rust structs matching QMK JSON schema
   - [ ] Parse keyboard layout (physical key positions)
   - [ ] Parse layers array
   - [ ] Parse keycodes for each key on each layer
-  
-- [ ] Load QMK keycode definitions from HJSON
-  - [ ] Parse `qmk_firmware/data/constants/keycodes/*.hjson` files
-  - [ ] Build keycode lookup table (code -> label mapping)
-  - [ ] Handle keycode aliases
-  - [ ] Support multiple keycode files (keycodes_basic.hjson, keycodes_quantum.hjson, etc.)
+
+- [x] Load QMK keycode definitions from HJSON
+  - [x] Parse `qmk_firmware/data/constants/keycodes/*.hjson` files
+  - [x] Build keycode lookup table (code -> label mapping)
+  - [x] Handle keycode aliases
+  - [x] Support multiple keycode files (keycodes_basic.hjson, keycodes_quantum.hjson, etc.)
   - [ ] Cache parsed keycode definitions
-  
+
 - [ ] Implement QMK keycode understanding
   - [ ] Create enum for QMK keycodes (basic keycodes)
   - [ ] Parse layer switching keycodes:
@@ -87,7 +87,7 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
   - [ ] Create `LayerTracker` struct
   - [ ] Maintain stack of active layers
   - [ ] Track held keys and their layer actions
-  
+
 - [ ] Implement layer switching logic
   - [ ] `MO(n)` - Add layer to stack on press, remove on release
   - [ ] `LT(n, kc)` - Track hold time, decide layer vs keycode
@@ -96,7 +96,7 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
   - [ ] `OSL(n)` - Activate for next keypress only
   - [ ] `TO(n)` - Clear stack and switch to layer
   - [ ] `DF(n)` - Change base layer
-  
+
 - [ ] Handle edge cases
   - [ ] Multiple simultaneous layer keys
   - [ ] Layer precedence (highest wins)
@@ -134,7 +134,7 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
   - [ ] Key labels with current layer
   - [ ] Highlight active layer keys
   - [ ] Visual feedback for held keys
-  
+
 - [ ] Implement overlay features
   - [ ] Always-on-top window
   - [ ] Transparent/semi-transparent background
@@ -142,7 +142,7 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
   - [ ] Draggable window (hold to drag)
   - [ ] Auto-hide when base layer active (optional)
   - [ ] Smooth layer transitions/animations
-  
+
 - [ ] Key rendering
   - [ ] Different colors for different key types
   - [ ] Show modifiers clearly
@@ -165,7 +165,7 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
   - [ ] Auto-hide settings
   - [ ] Theme/appearance settings
   - [ ] Keyboard device selection
-  
+
 - [ ] Configuration management
   - [ ] Load config from XDG/platform-specific location
   - [ ] Validate configuration
@@ -179,7 +179,7 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
   - [ ] Graceful failure messages
   - [ ] Help user debug issues (permissions, paths, etc.)
   - [ ] Log to file for troubleshooting
-  
+
 - [ ] Documentation
   - [ ] README with screenshots
   - [ ] Installation instructions
@@ -187,7 +187,7 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
   - [ ] Configuration examples
   - [ ] Troubleshooting section
   - [ ] Comparison with original Windows tool
-  
+
 - [ ] Testing
   - [ ] Unit tests for keymap parser
   - [ ] Unit tests for layer logic
@@ -201,17 +201,17 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
 - [ ] Cargo/crates.io
   - [ ] Publish to crates.io
   - [ ] Document `cargo install` method
-  
+
 - [ ] Homebrew (macOS)
   - [ ] Create Homebrew formula
   - [ ] Submit to homebrew-core or create tap
-  
+
 - [ ] Linux packages
   - [ ] Create AUR package (Arch)
   - [ ] Consider .deb package (Debian/Ubuntu)
   - [ ] Consider .rpm package (Fedora)
   - [ ] Flatpak/Snap consideration
-  
+
 - [ ] GitHub Releases
   - [ ] Set up CI/CD (GitHub Actions)
   - [ ] Automated builds for Linux/macOS
@@ -225,13 +225,13 @@ A cross-platform (Linux/macOS) QMK keymap overlay that requires no firmware modi
   - [ ] Provide QMK firmware example code
   - [ ] Implement HID Raw listener
   - [ ] Auto-detect HID vs simulated mode
-  
+
 - [ ] Advanced QMK features
   - [ ] Tap dance support
   - [ ] Combo support
   - [ ] Mod-tap timing accuracy
   - [ ] Custom keycode definitions
-  
+
 - [ ] Additional features
   - [ ] Key press statistics/heatmap
   - [ ] Layer usage analytics
